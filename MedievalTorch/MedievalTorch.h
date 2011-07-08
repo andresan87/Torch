@@ -23,6 +23,10 @@ class MedievalTorch : public gs2d::BaseApplication
 	ETHResourceProviderPtr m_provider;
 	ETHSceneProperties m_props;
 
+	SpritePtr renderTarget;
+
+	void RenderToTarget();
+
 public:
 	MedievalTorch();
 	~MedievalTorch();

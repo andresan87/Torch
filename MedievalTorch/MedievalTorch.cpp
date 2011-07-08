@@ -37,24 +37,29 @@ void MedievalTorch::Start(VideoPtr video, InputPtr input, AudioPtr audio)
 
 	const Vector2 screenSize = video->GetScreenSizeF();
 
+	const float TARGET_WIDTH = 480/4;
+	const float TARGET_HEIGHT = 854/4;
+
 	if (pTorch)
 		pTorch->Release();
 	pTorch = new ETHRenderEntity(GS_L("assets/entities/medieval_torch.ent"), m_provider);
-	pTorch->SetOrphanPositionXY(Vector2(screenSize.x / 2.0f, screenSize.y - (screenSize.y / 6.0f)));
+	pTorch->SetOrphanPositionXY(Vector2(TARGET_WIDTH / 2.0f, TARGET_HEIGHT - (TARGET_HEIGHT / 6.0f)));
 	pTorch->ScaleParticleSystem(0, 1.6f);
-	pTorch->ScaleParticleSystem(0, screenSize.x / 480.0f);
+	pTorch->ScaleParticleSystem(0, screenSize.x / 480.0f / 4);
+
+	renderTarget = video->CreateRenderTarget(static_cast<unsigned int>(TARGET_WIDTH), static_cast<unsigned int>(TARGET_HEIGHT), GSTF_DEFAULT);
 }
 
 Application::APP_STATUS MedievalTorch::Update(unsigned long lastFrameDeltaTimeMS)
 {
 	m_lastFrameDeltaTimeMS = lastFrameDeltaTimeMS;
 
-	const Vector3 accel3D(input->GetAccelerometerData() * 4.0f);
+	const Vector3 accel3D(input->GetAccelerometerData());
 	deltaForce = Vector3(lastForce - accel3D);
 	Vector3 userForce(accel3D);
 	lastForce = accel3D;
 
-	if (Abs(deltaForce.x) > 0.8f && DP3(Normalize(accel3D), Vector3(0, 1, 0)) > 0.7f)
+	if (Abs(deltaForce.x) > 0.2f && DP3(Normalize(accel3D), Vector3(0, 1, 0)) > 0.7f)
 	{
 		userForce.x *= -4.0f;
 	}
@@ -81,10 +86,10 @@ Application::APP_STATUS MedievalTorch::Update(unsigned long lastFrameDeltaTimeMS
 	return Application::APP_OK;
 }
 
-void MedievalTorch::RenderFrame()
+void MedievalTorch::RenderToTarget()
 {
-	const Vector2 screenSize = video->GetScreenSizeF();
-	video->BeginSpriteScene();
+	video->SetRenderTarget(renderTarget);
+	video->BeginTargetScene(GS_BLACK, true);
 
 	if (m_provider)
 	{
@@ -92,6 +97,23 @@ void MedievalTorch::RenderFrame()
 			pTorch->DrawParticles(0, 3000,-3000, m_props);
 		m_provider->GetShaderManager()->EndParticlePass();
 	}
+
+	video->EndTargetScene();
+	video->SetRenderTarget(SpritePtr());
+}
+
+void MedievalTorch::RenderFrame()
+{
+	RenderToTarget();
+
+	const Vector2 screenSize = video->GetScreenSizeF();
+	video->BeginSpriteScene();
+
+	const Vector2 push = video->GetCameraPos();
+	video->SetCameraPos(Vector2(0, 0));
+	
+	renderTarget->DrawShaped(Vector2(0, 0), screenSize, GS_WHITE, GS_WHITE, GS_WHITE, GS_WHITE, 0.0f);
+	video->SetCameraPos(push);
 
 	str_type::stringstream ss;
 	ss << video->GetFPSRate() << GS_L("\n");
