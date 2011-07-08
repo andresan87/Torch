@@ -43,7 +43,7 @@ void MedievalTorch::Start(VideoPtr video, InputPtr input, AudioPtr audio)
 	if (pTorch)
 		pTorch->Release();
 	pTorch = new ETHRenderEntity(GS_L("assets/entities/medieval_torch.ent"), m_provider);
-	pTorch->SetOrphanPositionXY(Vector2(TARGET_WIDTH / 2.0f, TARGET_HEIGHT - (TARGET_HEIGHT / 6.0f)));
+	pTorch->SetOrphanPositionXY(Vector2(TARGET_WIDTH / 2.0f, TARGET_HEIGHT - (TARGET_HEIGHT / 10.0f)));
 	pTorch->ScaleParticleSystem(0, 1.6f);
 	pTorch->ScaleParticleSystem(0, screenSize.x / 480.0f / 4);
 
@@ -59,9 +59,9 @@ Application::APP_STATUS MedievalTorch::Update(unsigned long lastFrameDeltaTimeMS
 	Vector3 userForce(accel3D);
 	lastForce = accel3D;
 
-	if (Abs(deltaForce.x) > 0.2f && DP3(Normalize(accel3D), Vector3(0, 1, 0)) > 0.7f)
+	if (Abs(deltaForce.x) > 0.1f)
 	{
-		userForce.x *= -4.0f;
+		userForce.x *= (-5.0f * DP3(Normalize(accel3D), Vector3(0, 1, 0)));
 	}
 
 	const Vector2 sumForce(userForce.x, userForce.y);
